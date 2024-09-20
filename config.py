@@ -16,7 +16,7 @@ def load_config():
             return json.load(f)
     return {
         "BREAK_DURATION": 20,
-        "WORK_DURATION": 12000,
+        "WORK_DURATION": 20,
     }
 
 

@@ -8,8 +8,8 @@ import ctypes
 import os
 import sys
 
-from .config import load_config, save_config, add_to_startup, CONFIG_FILE, MUTEX_NAME
-from .settings import SettingsWindow, Overlay, Timer
+from config import load_config, save_config, add_to_startup, CONFIG_FILE, MUTEX_NAME
+from settings import SettingsWindow, Overlay, Timer
 
 
 class EyeBreakApp:
@@ -25,6 +25,12 @@ class EyeBreakApp:
     def show_break(self):
         self.timer.is_break_time = True
         self.root.after(0, self.overlay.show)
+        # Schedule hiding the overlay after the break duration
+        self.root.after(self.config["BREAK_DURATION"] * 1000, self.hide_break)
+
+    def hide_break(self):
+        self.overlay.hide()
+        self.timer.is_break_time = False
 
     def exit_app(self):
         self.timer.stop()
@@ -57,7 +63,9 @@ class EyeBreakApp:
         image = Image.new("RGB", (64, 64), color=(73, 109, 137))
         menu = pystray.Menu(
             pystray.MenuItem(
-                f"Work time remaining: {time.strftime('%M:%S', time.gmtime(self.config['WORK_DURATION']))}",
+                f"Work time remaining: {time.strftime(
+            "%M:%S", time.gmtime(self.config["WORK_DURATION"] * 60)
+        )}",
                 lambda: None,
             ),
             pystray.MenuItem("Settings", self.show_settings),

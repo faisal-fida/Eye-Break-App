@@ -4,7 +4,7 @@ import threading
 import time
 from tkinter import ttk
 
-from .config import save_config, FONT, OVERLAY_TEXT
+from config import save_config, FONT, OVERLAY_TEXT
 
 
 class SettingsWindow:
@@ -15,7 +15,7 @@ class SettingsWindow:
         self.is_initial_setup = is_initial_setup
         self.window = tk.Toplevel(parent)
         self.window.title("Eye Break Settings")
-        self.window.geometry("400x250")
+        self.window.geometry("700x350")
         self.create_widgets()
 
     def create_widgets(self):
@@ -24,7 +24,7 @@ class SettingsWindow:
         self.break_entry.insert(0, str(self.config["BREAK_DURATION"]))
         self.break_entry.pack(pady=5)
 
-        tk.Label(self.window, text="Work Duration (seconds):").pack(pady=5)
+        tk.Label(self.window, text="Work Duration (minutes):").pack(pady=5)
         self.work_entry = tk.Entry(self.window)
         self.work_entry.insert(0, str(self.config["WORK_DURATION"]))
         self.work_entry.pack(pady=5)
@@ -48,15 +48,45 @@ class SettingsWindow:
 
     def save_settings(self):
         try:
+            break_duration = int(self.break_entry.get())
+            work_duration = int(self.work_entry.get())
+
+            if (
+                break_duration == self.config["BREAK_DURATION"]
+                and work_duration == self.config["WORK_DURATION"]
+            ) and not self.is_initial_setup:
+                self.message_label.config(text="No changes to save.", fg="red")
+                return
+
+            if break_duration < 20:
+                self.message_label.config(
+                    text="Break duration should be greater than 20 seconds.", fg="red"
+                )
+                return
+
+            if work_duration < 5:
+                self.message_label.config(
+                    text="Work duration should be greater than 5 minutes.", fg="red"
+                )
+                return
+
+            if work_duration < break_duration / 60:
+                self.message_label.config(
+                    text="Work duration should be greater than break duration.",
+                    fg="red",
+                )
+                return
+
             self.config["BREAK_DURATION"] = int(self.break_entry.get())
             self.config["WORK_DURATION"] = int(self.work_entry.get())
             save_config(self.config)
             self.message_label.config(text="Settings have been saved.")
             if not self.is_initial_setup and self.timer:
                 self.timer.restart_timer()
-            messagebox.showinfo("Settings Saved", "Settings have been saved.")
-            self.window.destroy()
-
+            else:
+                self.window.after(2000, self.window.destroy)
+                if self.is_initial_setup:
+                    self.parent.quit()
         except ValueError:
             messagebox.showerror(
                 "Invalid Input", "Please enter valid numbers for durations."
@@ -66,7 +96,7 @@ class SettingsWindow:
         if messagebox.askokcancel(
             "Quit", "Do you want to quit without saving settings?"
         ):
-            self.window.quit()
+            self.window.destroy()
 
 
 class Overlay:
@@ -136,7 +166,7 @@ class Timer:
     def run(self):
         while not self.stop_event.is_set():
             self.remaining_time = (
-                self.config["WORK_DURATION"]
+                self.config["WORK_DURATION"] * 60
                 if not self.is_break_time
                 else self.config["BREAK_DURATION"]
             )
@@ -147,6 +177,9 @@ class Timer:
 
             if not self.stop_event.is_set():
                 self.break_callback()
+                # Wait for the break duration
+                time.sleep(self.config["BREAK_DURATION"])
+                self.is_break_time = False
 
     def stop(self):
         self.stop_event.set()
@@ -155,5 +188,5 @@ class Timer:
         self.stop()
         self.stop_event.clear()
         self.is_break_time = False
-        self.remaining_time = self.config["WORK_DURATION"]
+        self.remaining_time = self.config["WORK_DURATION"] * 60
         threading.Thread(target=self.run, daemon=True).start()
