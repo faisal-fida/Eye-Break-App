@@ -4,7 +4,7 @@ import threading
 import time
 from tkinter import ttk
 
-from config import save_config, FONT, OVERLAY_TEXT
+from .config import save_config, FONT, OVERLAY_TEXT
 
 
 class SettingsWindow:
