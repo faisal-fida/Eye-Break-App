@@ -37,6 +37,7 @@ class EyeBreakApp:
         if self.icon:
             self.icon.stop()
         self.root.quit()
+        os._exit(0)
 
     def on_closing(self):
         self.exit_app()
@@ -83,7 +84,7 @@ class EyeBreakApp:
 
 
 def main():
-    mutex = ctypes.windll.kernel32.CreateMutexW(None, 1, MUTEX_NAME)
+    ctypes.windll.kernel32.CreateMutexW(None, 1, MUTEX_NAME)
     if ctypes.windll.kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
         messagebox.showwarning("Warning", "The application is already running.")
         sys.exit(0)
@@ -92,7 +93,7 @@ def main():
     if not os.path.exists(CONFIG_FILE):
         root = tk.Tk()
         root.withdraw()
-        settings_window = SettingsWindow(root, config, None, is_initial_setup=True)
+        SettingsWindow(root, config, None, is_initial_setup=True)
         root.mainloop()
         save_config(config)
         add_to_startup()
