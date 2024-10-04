@@ -4,8 +4,8 @@ __pycache__/
 *$py.class
 
 # Distribution / packaging
-packaging/build/
-packaging/dist/
+build/
+dist/
 packaging/*.egg-info/
 packaging/*.spec
 
